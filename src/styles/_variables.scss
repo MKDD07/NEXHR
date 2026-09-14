@@ -1,0 +1,111 @@
+// ============================================================================
+// PulseHRMS Clean Light Theme SCSS Variables & Tokens
+// Typography: Inter
+// Palette: White, #27292C, #5F6368, #E5E7EB
+// ============================================================================
+
+$font-family-base: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+$font-family-display: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+$breakpoint-sm: 640px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 1024px;
+$breakpoint-xl: 1280px;
+
+:root {
+  // Typography
+  --font-family-base: #{$font-family-base};
+  --font-family-display: #{$font-family-display};
+
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 20px;
+  --fluid-2xl-to-4xl: clamp(22px, 2vw, 30px);
+
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  // Spacing Scale
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+
+  // Layout Dimensions
+  --sidebar-width: 260px;
+  --sidebar-collapsed: 76px;
+  --topbar-height: 64px;
+  --input-height: 40px;
+
+  // Clean Light Neutral Color System
+  --color-background: #FAFAFA;
+  --color-base-background-2: #F8F9FA;
+  --color-base-surface: #FFFFFF;
+  --color-base-surface-2: #F9FAFB;
+  --color-base-surface-3: #F3F4F6;
+
+  --color-foreground: #27292C;
+  --color-base-text: #27292C;
+  --color-base-text-muted: #5F6368;
+  --color-base-text-subtle: #9AA0A6;
+
+  --color-border: #E5E7EB;
+  --color-border-light: #F1F3F5;
+
+  // Accent & Actions
+  --color-highlight: #27292C;
+  --color-base-highlight-subtle: #F3F4F6;
+  --color-button-gradient: #27292C;
+  --color-button-text: #FFFFFF;
+  --color-button-border: #27292C;
+
+  // Status Colors (Subtle & Professional)
+  --color-danger: #DC2626;
+  --color-danger-subtle: #FEF2F2;
+  --color-success: #10B981;
+  --color-success-subtle: #ECFDF5;
+  --color-warning: #D97706;
+  --color-warning-subtle: #FFFBEB;
+  --color-info: #2563EB;
+  --color-info-subtle: #EFF6FF;
+
+  // Chart Accents
+  --chart-1: #27292C;
+  --chart-2: #4F46E5;
+  --chart-3: #0D9488;
+  --chart-4: #10B981;
+  --chart-5: #F59E0B;
+  --chart-6: #EF4444;
+  --chart-7: #8B5CF6;
+  --chart-8: #06B6D4;
+
+  // Shapes & Shadows
+  --border-radius-small: 8px;
+  --border-radius: 12px;
+  --border-radius-large: 16px;
+  --rounded-full: 9999px;
+
+  --shadow-sm: 0 1px 2px 0 rgba(16, 24, 40, 0.04);
+  --shadow-card: 0 1px 3px 0 rgba(16, 24, 40, 0.04), 0 1px 2px -1px rgba(16, 24, 40, 0.03);
+  --shadow-lg: 0 10px 15px -3px rgba(16, 24, 40, 0.06), 0 4px 6px -4px rgba(16, 24, 40, 0.04);
+
+  // Layering
+  --z-base: 1;
+  --z-sticky: 30;
+  --z-dropdown: 50;
+  --z-modal: 100;
+  --z-toast: 150;
+
+  // Animations
+  --animation-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --animation-smooth: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --animation-nav: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
