@@ -12,6 +12,7 @@ export function AppLayout({
   currentUser,
   allUsers,
   onSwitchUser,
+  onSelectEmployee,
   todaysAttendance,
   onPunchAttendance,
   onLogout,
@@ -85,8 +86,7 @@ export function AppLayout({
           currentUser={currentUser}
           onSwitchUser={onSwitchUser}
           allUsers={allUsers}
-          todaysAttendance={todaysAttendance}
-          onQuickPunch={() => setPunchModalOpen(true)}
+          onSelectEmployee={onSelectEmployee}
           onOpenNotifications={() => setNotificationsOpen(true)}
           onLogout={onLogout}
           unreadCount={notifications.length}

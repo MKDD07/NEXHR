@@ -16,7 +16,10 @@ import {
   Sparkles,
   ChevronRight,
   LogOut,
-  Database
+  Database,
+  MapPin,
+  DollarSign,
+  GitBranch
 } from 'lucide-react';
 import { Avatar } from '../ui/Avatar';
 import { DB_ID } from '../../lib/api';
@@ -27,9 +30,12 @@ const NAV_SECTIONS = [
     items: [
       { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
       { id: 'employees', label: 'Employee Directory', icon: Users, badge: '148' },
-      { id: 'attendance', label: 'Attendance & Geofence', icon: Clock },
+      { id: 'hierarchy', label: 'Org Hierarchy Matrix', icon: GitBranch, badge: '5 Stages' },
+      { id: 'attendance', label: 'Attendance & Logs', icon: Clock },
+      { id: 'geofence-rules', label: 'Geofence & Photo Rules', icon: MapPin },
       { id: 'leave', label: 'Leaves & Holidays', icon: CalendarDays },
-      { id: 'payroll', label: 'Payroll & CTC', icon: CreditCard }
+      { id: 'payroll', label: 'Payroll & CTC', icon: CreditCard },
+      { id: 'salary-structure', label: 'Edit Salary & Structure', icon: DollarSign }
     ]
   },
   {

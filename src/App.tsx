@@ -13,6 +13,9 @@ import { AssetsPage } from './pages/assets/AssetsPage';
 import { DocumentsPage } from './pages/documents/DocumentsPage';
 import { ReportsPage } from './pages/reports/ReportsPage';
 import { SettingsPage } from './pages/settings/SettingsPage';
+import { SalaryStructurePage } from './pages/salary/SalaryStructurePage';
+import { GeofenceRulesPage } from './pages/geofence/GeofenceRulesPage';
+import { HierarchyMatrixPage } from './pages/hierarchy/HierarchyMatrixPage';
 import { hrmsApi } from './lib/api';
 
 export default function App() {
@@ -212,6 +215,7 @@ export default function App() {
       currentUser={currentUser}
       allUsers={allUsers}
       onSwitchUser={handleSwitchUser}
+      onSelectEmployee={handleSelectEmployee}
       todaysAttendance={todaysAttendance}
       onPunchAttendance={handlePunchAttendance}
       onLogout={handleLogout}
@@ -232,6 +236,15 @@ export default function App() {
 
       {activePage === 'employees' && (
         <EmployeesPage
+          api={hrmsApi}
+          onSelectEmployee={handleSelectEmployee}
+          onShowToast={showToast}
+          onNavigate={(page) => setActivePage(page)}
+        />
+      )}
+
+      {activePage === 'hierarchy' && (
+        <HierarchyMatrixPage
           api={hrmsApi}
           onSelectEmployee={handleSelectEmployee}
           onShowToast={showToast}
@@ -270,6 +283,22 @@ export default function App() {
           api={hrmsApi}
           currentUser={currentUser}
           onShowToast={showToast}
+        />
+      )}
+
+      {activePage === 'salary-structure' && (
+        <SalaryStructurePage
+          api={hrmsApi}
+          onShowToast={showToast}
+          onSelectEmployee={handleSelectEmployee}
+        />
+      )}
+
+      {activePage === 'geofence-rules' && (
+        <GeofenceRulesPage
+          api={hrmsApi}
+          onShowToast={showToast}
+          onSelectEmployee={handleSelectEmployee}
         />
       )}
 

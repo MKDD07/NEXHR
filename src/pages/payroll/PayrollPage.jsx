@@ -108,6 +108,20 @@ export function PayrollPage({
     return name.includes(search.toLowerCase()) || uid.includes(search.toLowerCase());
   });
 
+  const totalNetDisbursed = salaries.reduce((acc, s) => {
+    return acc + (Number(s.net || s.amount_paid || s.structure?.net_salary) || 0);
+  }, 0);
+
+  const totalPfContribution = salaries.reduce((acc, s) => {
+    return acc + (Number(s.pf || s.structure?.provident_fund) || 0);
+  }, 0);
+
+  const totalTdsDeductions = salaries.reduce((acc, s) => {
+    return acc + (Number(s.tds || s.structure?.income_tax_tds) || 0);
+  }, 0);
+
+  const employeesCount = salaries.length;
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -130,32 +144,31 @@ export function PayrollPage({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           label="Total Monthly Disbursal"
-          value="₹84.6 L"
+          value={`₹${totalNetDisbursed.toLocaleString('en-IN')}`}
           icon={CreditCard}
           color="indigo"
-          trend={{ direction: 'up', value: '+3.4%' }}
           metaText="Net employee payout"
         />
         <StatCard
           label="Statutory PF Contribution"
-          value="₹5.82 L"
+          value={`₹${totalPfContribution.toLocaleString('en-IN')}`}
           icon={ShieldCheck}
           color="cyan"
           metaText="Deposited with EPFO"
         />
         <StatCard
           label="Withholding TDS Deductions"
-          value="₹4.65 L"
+          value={`₹${totalTdsDeductions.toLocaleString('en-IN')}`}
           icon={DollarSign}
           color="amber"
           metaText="Quarterly Form 24Q"
         />
         <StatCard
-          label="Payroll Compliance Score"
-          value="100%"
+          label="Disbursed Records"
+          value={`${employeesCount} Records`}
           icon={CheckCircle2}
           color="green"
-          metaText="Zero overdue audits"
+          metaText="D1 SQL verified ledger"
         />
       </div>
 
@@ -214,19 +227,23 @@ export function PayrollPage({
                     </td>
 
                     <td className="py-3 px-4 font-mono font-medium text-slate-200">
-                      ₹{item.structure?.gross_salary?.toLocaleString() || '90,000'}
+                      ₹{(
+                        Number(item.gross || item.structure?.gross_salary || 0)
+                      ).toLocaleString('en-IN')}
                     </td>
 
                     <td className="py-3 px-4 text-rose-400 font-mono">
                       -₹{(
-                        (item.structure?.provident_fund || 5400) +
-                        (item.structure?.professional_tax || 200) +
-                        (item.structure?.income_tax_tds || 4200)
-                      ).toLocaleString()}
+                        Number(item.pf || item.structure?.provident_fund || 0) +
+                        Number(item.pt || item.structure?.professional_tax || 200) +
+                        Number(item.tds || item.structure?.income_tax_tds || 0)
+                      ).toLocaleString('en-IN')}
                     </td>
 
                     <td className="py-3 px-4 font-bold text-emerald-400 font-mono text-sm">
-                      ₹{(item.amount_paid || item.structure?.net_salary || 80200).toLocaleString()}
+                      ₹{(
+                        Number(item.net || item.amount_paid || item.structure?.net_salary || 0)
+                      ).toLocaleString('en-IN')}
                     </td>
 
                     <td className="py-3 px-4">

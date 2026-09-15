@@ -12,7 +12,13 @@ import {
   Calendar,
   ExternalLink,
   Shield,
-  UserCheck
+  UserCheck,
+  Sparkles,
+  Download,
+  FileText,
+  CheckCircle2,
+  GitBranch,
+  RefreshCw
 } from 'lucide-react';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { Button } from '../../components/ui/Button';
@@ -20,11 +26,15 @@ import { Badge } from '../../components/ui/Badge';
 import { Avatar } from '../../components/ui/Avatar';
 import { Modal } from '../../components/ui/Modal';
 import { FilterBar } from '../../components/ui/FilterBar';
+import { EmployeeManageModal } from './EmployeeManageModal';
+import { MONTHS, YEARS, getMonthlySalary, getInitialMonthlyRecord } from '../../lib/salaryStore';
+import { generatePayslipPDF } from '../../lib/pdfGenerator';
 
 export function EmployeesPage({
   api,
   onSelectEmployee,
-  onShowToast
+  onShowToast,
+  onNavigate
 }) {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,6 +42,16 @@ export function EmployeesPage({
   const [selectedDept, setSelectedDept] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  // Give Action Modal state
+  const [selectedEmployeeForAction, setSelectedEmployeeForAction] = useState(null);
+  const [isActionModalOpen, setIsActionModalOpen] = useState(false);
+
+  // Salary Payslip Download Modal state
+  const [selectedEmployeeForSlip, setSelectedEmployeeForSlip] = useState(null);
+  const [isSlipModalOpen, setIsSlipModalOpen] = useState(false);
+  const [slipMonth, setSlipMonth] = useState('September');
+  const [slipYear, setSlipYear] = useState('2026');
 
   // New Employee Form state
   const [newFirstName, setNewFirstName] = useState('');
@@ -42,6 +62,7 @@ export function EmployeesPage({
   const [newDesignation, setNewDesignation] = useState('Software Engineer');
   const [newLocation, setNewLocation] = useState('HQ Vashi Infotech Park');
   const [newRoleType, setNewRoleType] = useState('Employee');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const loadUsers = async () => {
     setLoading(true);
@@ -52,6 +73,34 @@ export function EmployeesPage({
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRefreshFromDb = async () => {
+    setIsRefreshing(true);
+    try {
+      const res = await api.getAllUsers();
+      if (res.data) {
+        setEmployees(res.data);
+        if (onShowToast) {
+          onShowToast({
+            type: 'success',
+            title: 'Directory Refreshed',
+            message: `Loaded ${res.data.length} team members.`
+          });
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      if (onShowToast) {
+        onShowToast({
+          type: 'error',
+          title: 'Sync Notice',
+          message: 'Failed to refresh team directory.'
+        });
+      }
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
@@ -102,6 +151,113 @@ export function EmployeesPage({
     }
   };
 
+  const handleOpenGiveAction = (emp) => {
+    setSelectedEmployeeForAction(emp);
+    setIsActionModalOpen(true);
+  };
+
+  const handleOpenSlipModal = (emp) => {
+    setSelectedEmployeeForSlip(emp);
+    setIsSlipModalOpen(true);
+  };
+
+  const handleDownloadSalaryPDF = () => {
+    if (!selectedEmployeeForSlip) return;
+    const rec =
+      getMonthlySalary(selectedEmployeeForSlip.userid, slipYear, slipMonth) ||
+      getInitialMonthlyRecord(selectedEmployeeForSlip.userid, slipYear, slipMonth);
+
+    const success = generatePayslipPDF({
+      employee: selectedEmployeeForSlip,
+      salaryRecord: rec,
+      month: slipMonth,
+      year: slipYear
+    });
+
+    if (success) {
+      if (onShowToast) {
+        onShowToast({
+          type: 'success',
+          title: 'Payslip Downloaded',
+          message: `${slipMonth} ${slipYear} payslip PDF generated for ${selectedEmployeeForSlip.first_name} ${selectedEmployeeForSlip.last_name}.`
+        });
+      }
+      setIsSlipModalOpen(false);
+    } else {
+      if (onShowToast) {
+        onShowToast({
+          type: 'error',
+          title: 'Download Failed',
+          message: 'Unable to generate payslip PDF. Please try again.'
+        });
+      }
+    }
+  };
+
+  const handleActionCompleted = async (actionData) => {
+    if (actionData.type === 'full_update') {
+      setEmployees((prev) =>
+        prev.map((emp) =>
+          emp.userid === actionData.employeeId
+            ? {
+                ...emp,
+                first_name: actionData.first_name,
+                last_name: actionData.last_name,
+                email: actionData.email,
+                phone_number: actionData.phone_number,
+                status: actionData.status,
+                department: actionData.department,
+                designation: actionData.designation,
+                type: actionData.type,
+                work_location: actionData.work_location,
+                date_of_birth: actionData.date_of_birth
+              }
+            : emp
+        )
+      );
+      try {
+        await api.updateUser(actionData.employeeId, {
+          first_name: actionData.first_name,
+          last_name: actionData.last_name,
+          email: actionData.email,
+          phone_number: actionData.phone_number,
+          status: actionData.status,
+          department: actionData.department,
+          designation: actionData.designation,
+          type: actionData.type,
+          work_location: actionData.work_location,
+          date_of_birth: actionData.date_of_birth
+        });
+      } catch (err) {
+        console.error('Error updating employee record:', err);
+      }
+    } else if (actionData.type === 'role_update') {
+      setEmployees((prev) =>
+        prev.map((emp) =>
+          emp.userid === actionData.employeeId
+            ? {
+                ...emp,
+                status: actionData.status,
+                department: actionData.department,
+                designation: actionData.designation,
+                type: actionData.roleType
+              }
+            : emp
+        )
+      );
+      try {
+        await api.updateUser(actionData.employeeId, {
+          status: actionData.status,
+          department: actionData.department,
+          designation: actionData.designation,
+          type: actionData.roleType
+        });
+      } catch (err) {
+        console.error('Error updating employee record:', err);
+      }
+    }
+  };
+
   const filteredEmployees = employees.filter((emp) => {
     const fullName = `${emp.first_name || ''} ${emp.last_name || ''}`.toLowerCase();
     const matchesSearch =
@@ -125,14 +281,39 @@ export function EmployeesPage({
         subtitle={`Managing ${employees.length} active enterprise members across all locations and departments.`}
         breadcrumbs={['HRMS', 'Directory']}
         actions={
-          <Button
-            variant="primary"
-            size="sm"
-            icon={Plus}
-            onClick={() => setIsAddModalOpen(true)}
-          >
-            Onboard Employee
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={RefreshCw}
+              className={isRefreshing ? '[&_svg]:animate-spin text-[#4F46E5]' : ''}
+              disabled={isRefreshing}
+              onClick={handleRefreshFromDb}
+              title="Refresh employee directory"
+            >
+              {isRefreshing ? 'Refreshing...' : 'Refresh'}
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={GitBranch}
+              onClick={() => {
+                if (onNavigate) {
+                  onNavigate('hierarchy');
+                }
+              }}
+            >
+              Org Hierarchy Matrix
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              icon={Plus}
+              onClick={() => setIsAddModalOpen(true)}
+            >
+              Onboard Employee
+            </Button>
+          </div>
         }
       />
 
@@ -256,17 +437,45 @@ export function EmployeesPage({
                     </td>
 
                     <td className="py-3 px-4 text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        icon={ExternalLink}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSelectEmployee(emp.userid);
-                        }}
-                      >
-                        Dossier
-                      </Button>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <Button
+                          id={`btn-payslip-${emp.userid}`}
+                          variant="secondary"
+                          size="sm"
+                          className="text-xs px-2 py-1.5 whitespace-nowrap text-[#27292C] hover:bg-[#F3F4F6]"
+                          icon={Download}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenSlipModal(emp);
+                          }}
+                        >
+                          Payslip PDF
+                        </Button>
+                        <Button
+                          id={`btn-manage-employee-${emp.userid}`}
+                          variant="primary"
+                          size="sm"
+                          className="bg-[#27292C] hover:bg-[#111827] text-[#FFFFFF] font-medium text-xs px-2.5 py-1.5 shadow-xs whitespace-nowrap"
+                          icon={Calendar}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenGiveAction(emp);
+                          }}
+                        >
+                          Quick Manage
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          icon={ExternalLink}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelectEmployee(emp.userid);
+                          }}
+                        >
+                          Dossier
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -274,6 +483,32 @@ export function EmployeesPage({
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Dedicated Org Hierarchy Matrix Tab Banner */}
+      <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-[#EEF2FF] text-[#4F46E5] flex items-center justify-center shrink-0 border border-[#E0E7FF]">
+            <GitBranch className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-[#1E293B]">
+              Enterprise Organizational Hierarchy & Reporting Matrix
+            </h3>
+            <p className="text-xs text-[#64748B] mt-0.5">
+              Dedicated hierarchy database table with Seniors (max 6) & Juniors (max 6), comma-separated user IDs (e.g. A under B and C), right-hand draggable person cards, and 5-stage progression.
+            </p>
+          </div>
+        </div>
+        <Button
+          variant="primary"
+          size="sm"
+          icon={GitBranch}
+          onClick={() => onNavigate && onNavigate('hierarchy')}
+          className="shrink-0"
+        >
+          Open Hierarchy Matrix Tab
+        </Button>
       </div>
 
       {/* Onboard New Employee Modal */}
@@ -416,6 +651,143 @@ export function EmployeesPage({
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Employee Manage Modal */}
+      <EmployeeManageModal
+        isOpen={isActionModalOpen}
+        onClose={() => {
+          setIsActionModalOpen(false);
+          setSelectedEmployeeForAction(null);
+        }}
+        employee={selectedEmployeeForAction}
+        onActionCompleted={handleActionCompleted}
+        onShowToast={onShowToast}
+        onSelectEmployee={onSelectEmployee}
+      />
+
+      {/* Salary Payslip Download Modal */}
+      <Modal
+        isOpen={isSlipModalOpen}
+        onClose={() => {
+          setIsSlipModalOpen(false);
+          setSelectedEmployeeForSlip(null);
+        }}
+        title="Download Salary Payslip (PDF)"
+        size="md"
+      >
+        {selectedEmployeeForSlip && (() => {
+          const record =
+            getMonthlySalary(selectedEmployeeForSlip.userid, slipYear, slipMonth) ||
+            getInitialMonthlyRecord(selectedEmployeeForSlip.userid, slipYear, slipMonth);
+
+          return (
+            <div className="space-y-4">
+              {/* Employee Summary Card */}
+              <div className="flex items-center gap-3 p-3.5 rounded-xl border border-[#E5E7EB] bg-[#FAFAFA]">
+                <Avatar
+                  name={`${selectedEmployeeForSlip.first_name} ${selectedEmployeeForSlip.last_name}`}
+                  src={selectedEmployeeForSlip.profile_pic_url}
+                  size="md"
+                  avatarId={selectedEmployeeForSlip.avatar_id}
+                />
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-sm font-bold text-[#27292C] truncate">
+                    {selectedEmployeeForSlip.first_name} {selectedEmployeeForSlip.last_name}
+                  </h4>
+                  <p className="text-xs text-[#5F6368] font-mono">
+                    {selectedEmployeeForSlip.userid} • {selectedEmployeeForSlip.designation || 'Staff'}
+                  </p>
+                  <p className="text-[11px] text-[#5F6368] truncate">
+                    Disbursal: {record.bank_name || 'HDFC Bank Ltd'} ({record.bank_account || '•••• •••• 9842'})
+                  </p>
+                </div>
+              </div>
+
+              {/* Month & Year Selection */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-[#27292C] mb-1">
+                    Select Month
+                  </label>
+                  <select
+                    value={slipMonth}
+                    onChange={(e) => setSlipMonth(e.target.value)}
+                    className="w-full text-xs h-9 rounded-lg border border-[#E5E7EB] bg-[#FFFFFF] px-2.5"
+                  >
+                    {MONTHS.map((m) => (
+                      <option key={m} value={m}>
+                        {m}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-[#27292C] mb-1">
+                    Select Year
+                  </label>
+                  <select
+                    value={slipYear}
+                    onChange={(e) => setSlipYear(e.target.value)}
+                    className="w-full text-xs h-9 rounded-lg border border-[#E5E7EB] bg-[#FFFFFF] px-2.5"
+                  >
+                    {YEARS.map((y) => (
+                      <option key={y} value={y}>
+                        {y}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Salary Breakdown Summary Card */}
+              <div className="p-3.5 rounded-xl border border-[#E5E7EB] bg-[#FFFFFF] space-y-2 text-xs">
+                <div className="flex justify-between items-center border-b border-[#F3F4F6] pb-1.5">
+                  <span className="text-[#5F6368]">Monthly Gross Earnings (Additions):</span>
+                  <span className="font-mono font-bold text-[#10B981]">
+                    +₹{(record.monthly_gross || 87000).toLocaleString('en-IN')}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center border-b border-[#F3F4F6] pb-1.5">
+                  <span className="text-[#5F6368]">Statutory Deductions (PF, PT, TDS):</span>
+                  <span className="font-mono font-bold text-[#EF4444]">
+                    -₹{(record.total_deductions || 25000).toLocaleString('en-IN')}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center pt-1 font-bold text-sm">
+                  <span className="text-[#27292C]">Net Disbursed Take-Home:</span>
+                  <span className="font-mono text-[#065F46] bg-[#ECFDF5] px-2 py-0.5 rounded">
+                    ₹{(record.monthly_net || 62000).toLocaleString('en-IN')}
+                  </span>
+                </div>
+              </div>
+
+              {/* Footer Actions */}
+              <div className="flex justify-end gap-2 pt-2 border-t border-[#E5E7EB]">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    setIsSlipModalOpen(false);
+                    setSelectedEmployeeForSlip(null);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  id="btn-confirm-download-pdf"
+                  variant="primary"
+                  size="sm"
+                  icon={Download}
+                  onClick={handleDownloadSalaryPDF}
+                >
+                  Download {slipMonth} Payslip (PDF)
+                </Button>
+              </div>
+            </div>
+          );
+        })()}
       </Modal>
     </div>
   );
